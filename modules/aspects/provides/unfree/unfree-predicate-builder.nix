@@ -16,16 +16,6 @@ let
     };
   };
 
-  moduleImports = [
-    unfreeComposableModule
-    (
-      { config, ... }:
-      {
-        nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) config.unfree.packages;
-      }
-    )
-  ];
-
   aspect = den.lib.parametric.exactly {
     includes = [
       (
@@ -34,7 +24,15 @@ let
           unused = den.lib.take.unused OS;
         in
         {
-          ${host.class}.imports = moduleImports;
+          ${host.class}.imports = [
+            unfreeComposableModule
+            (
+              { config, ... }:
+              {
+                nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) config.unfree.packages;
+              }
+            )
+          ];
         }
       )
       (
@@ -51,7 +49,17 @@ let
           ];
         in
         {
-          ${user.class}.imports = moduleImports;
+          ${user.class}.imports = [
+            unfreeComposableModule
+            (
+              { config, ... }:
+              {
+                nixpkgs.config.allowUnfreePredicate = lib.mkIf (!config.home-manager.useGlobalPkgs) (
+                  pkg: builtins.elem (lib.getName pkg) config.unfree.packages
+                );
+              }
+            )
+          ];
         }
       )
       (
@@ -60,7 +68,17 @@ let
           unused = den.lib.take.unused HM;
         in
         {
-          ${home.class}.imports = moduleImports;
+          ${home.class}.imports = [
+            unfreeComposableModule
+            (
+              { config, ... }:
+              {
+                nixpkgs.config.allowUnfreePredicate = lib.mkIf (!config.home-manager.useGlobalPkgs) (
+                  pkg: builtins.elem (lib.getName pkg) config.unfree.packages
+                );
+              }
+            )
+          ];
         }
       )
     ];
